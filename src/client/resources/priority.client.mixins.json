@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "aman037.priority.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ClientMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

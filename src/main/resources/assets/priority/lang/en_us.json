@@ -1,0 +1,22 @@
+{
+    "text.autoconfig.hotbarpriority.title": "Hotbar Priority",
+    "text.autoconfig.hotbarpriority.category.default": "Hotbar Slots",
+    "text.autoconfig.hotbarpriority.option.slot0Priority": "Slot 1 Priority",
+    "text.autoconfig.hotbarpriority.option.slot1Priority": "Slot 2 Priority",
+    "text.autoconfig.hotbarpriority.option.slot2Priority": "Slot 3 Priority",
+    "text.autoconfig.hotbarpriority.option.slot3Priority": "Slot 4 Priority",
+    "text.autoconfig.hotbarpriority.option.slot4Priority": "Slot 5 Priority",
+    "text.autoconfig.hotbarpriority.option.slot5Priority": "Slot 6 Priority",
+    "text.autoconfig.hotbarpriority.option.slot6Priority": "Slot 7 Priority",
+    "text.autoconfig.hotbarpriority.option.slot7Priority": "Slot 8 Priority",
+    "text.autoconfig.hotbarpriority.option.slot8Priority": "Slot 9 Priority",
+    "text.autoconfig.hotbarpriority.option.slotPriority.description": "Enter unique values 1-9 to set hotbar priority order.",
+    "hotbarpriority.button.save": "Save",
+    "hotbarpriority.button.cancel": "Cancel",
+    "hotbarpriority.button.reset_slot": "Reset",
+    "hotbarpriority.slot_label": "Slot %s",
+    "hotbarpriority.error.missing": "All slots must have a priority.",
+    "hotbarpriority.error.out_of_range": "Priorities must be between 1 and 9.",
+    "hotbarpriority.error.duplicate_value": "Priority %s is assigned more than once.",
+    "hotbarpriority.error.conflict": "Resolve duplicate priorities before saving."
+}
