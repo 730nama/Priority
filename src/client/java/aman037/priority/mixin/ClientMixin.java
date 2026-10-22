@@ -1,6 +1,6 @@
-package com.example.mixin.client;
+package aman037.priority.mixin;
 
-import com.example.config.HotbarPriorityConfig;
+import aman037.priority.PriorityConfig;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
@@ -8,9 +8,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(net.minecraft.client.Minecraft.class)
-public class MinecraftClientMixin {
+public class ClientMixin {
 
-    // Track the winning key across the loop iteration
     private static int winningKeyIndex = -1;
     private static int highestPriority = -1;
     private static boolean checkedThisTick = false;
@@ -21,15 +20,14 @@ public class MinecraftClientMixin {
     )
     private boolean redirectWasPressed(KeyMapping keyMapping) {
         net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
-        
-        if (client.player == null || client.screen != null) {
+
+        if (client.player == null || client.gui.screen() != null) {
             return keyMapping.consumeClick();
         }
-        
-        HotbarPriorityConfig config = AutoConfig.getConfigHolder(HotbarPriorityConfig.class).getConfig();
+
+        PriorityConfig config = AutoConfig.getConfigHolder(PriorityConfig.class).getConfig();
         KeyMapping[] hotbarKeys = client.options.keyHotbarSlots;
-        
-        // Find which hotbar key this is
+
         int thisKeyIndex = -1;
         for (int i = 0; i < hotbarKeys.length; i++) {
             if (hotbarKeys[i] == keyMapping) {
@@ -37,17 +35,16 @@ public class MinecraftClientMixin {
                 break;
             }
         }
-        
-        // If not a hotbar key, return normal result
+
         if (thisKeyIndex == -1 || thisKeyIndex >= 9) {
             return keyMapping.consumeClick();
         }
-        
-        // First call of each tick - find the winner
+
+        // figure out the winner on the first slot, then reset after slot 8
         if (!checkedThisTick) {
             winningKeyIndex = -1;
             highestPriority = -1;
-            
+
             for (int i = 0; i < 9 && i < hotbarKeys.length; i++) {
                 if (hotbarKeys[i].consumeClick()) {
                     int priority = config.getSlotPriority(i);
@@ -59,14 +56,11 @@ public class MinecraftClientMixin {
             }
             checkedThisTick = true;
         }
-        
-        // Reset flag after we've processed all 9 keys
+
         if (thisKeyIndex == 8) {
             checkedThisTick = false;
         }
-        
-        // Only return true for the winning key
+
         return thisKeyIndex == winningKeyIndex && winningKeyIndex != -1;
     }
-
 }

@@ -1,8 +1,11 @@
-	package com.example.client.gui;
+package aman037.priority;
 
-import com.example.config.HotbarPriorityConfig;
+import com.terraformersmc.modmenu.api.ConfigScreenFactory;
+import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -18,30 +21,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class HotbarPriorityConfigScreen extends Screen {
-	private static final int MAX_COLUMNS = 2;
+public class ConfigScreen extends Screen {
 	private static final int LABEL_WIDTH = 64;
 	private static final int FIELD_WIDTH = 30;
 	private static final int FIELD_HEIGHT = 20;
-	private static final int RESET_BUTTON_WIDTH = 42;
-	private static final int RESET_BUTTON_HEIGHT = 20;
-	private static final int LABEL_FIELD_GAP = 6;
-	private static final int FIELD_BUTTON_GAP = 6;
-	private static final int COLUMN_GAP = 28;
 	private static final int PANEL_MARGIN = 22;
 	private static final int ROW_SPACING = 30;
-	private static final int CONTENT_BOTTOM_PADDING = 96;
-	private static final int CONTENT_TOP_PADDING = 48;
-	private static final int MIN_TOP_MARGIN = 72;
-	private static final int DEFAULT_ROWS_PER_COLUMN = 5;
 	private static final int SLOT_COUNT = 9;
 
 	private final Screen parent;
-	private final ConfigHolder<HotbarPriorityConfig> holder;
+	private final ConfigHolder<PriorityConfig> holder;
 	private final List<SlotField> slotFields = new ArrayList<>();
 
 	private Button saveButton;
 	private Component errorText;
+	private int[] pendingValues;
 	private int baseY;
 	private int firstColumnX;
 	private int panelLeft;
@@ -53,10 +47,10 @@ public class HotbarPriorityConfigScreen extends Screen {
 	private int columnContentWidth;
 	private int labelColumnWidth;
 
-	public HotbarPriorityConfigScreen(Screen parent) {
+	public ConfigScreen(Screen parent) {
 		super(Component.literal("Hotbar Priority"));
 		this.parent = parent;
-		this.holder = AutoConfig.getConfigHolder(HotbarPriorityConfig.class);
+		this.holder = AutoConfig.getConfigHolder(PriorityConfig.class);
 	}
 
 	@Override
@@ -75,13 +69,13 @@ public class HotbarPriorityConfigScreen extends Screen {
 		}
 
 		this.labelColumnWidth = Math.max(LABEL_WIDTH, maxLabelTextWidth + 6);
-		int columnInnerWidth = this.labelColumnWidth + LABEL_FIELD_GAP + FIELD_WIDTH + FIELD_BUTTON_GAP + RESET_BUTTON_WIDTH;
+		int columnInnerWidth = this.labelColumnWidth + 6 + FIELD_WIDTH + 6 + 42;
 		int usableWidth = Math.max(columnInnerWidth, this.width - PANEL_MARGIN * 2);
 
-		int desiredColumns = Math.min(MAX_COLUMNS, Math.max(1, (int) Math.ceil(SLOT_COUNT / (double) DEFAULT_ROWS_PER_COLUMN)));
+		int desiredColumns = Math.min(2, Math.max(1, (int) Math.ceil(SLOT_COUNT / 5.0)));
 		int columns = desiredColumns;
 		while (columns > 1) {
-			int requiredWidth = columns * columnInnerWidth + (columns - 1) * COLUMN_GAP;
+			int requiredWidth = columns * columnInnerWidth + (columns - 1) * 28;
 			if (requiredWidth <= usableWidth) {
 				break;
 			}
@@ -91,20 +85,20 @@ public class HotbarPriorityConfigScreen extends Screen {
 		this.rowsPerColumn = (int) Math.ceil(SLOT_COUNT / (double) this.columnCount);
 		this.columnContentWidth = columnInnerWidth;
 
-		int totalColumnsWidth = this.columnCount * this.columnContentWidth + (this.columnCount - 1) * COLUMN_GAP;
+		int totalColumnsWidth = this.columnCount * this.columnContentWidth + (this.columnCount - 1) * 28;
 		this.firstColumnX = centerX - totalColumnsWidth / 2;
 		this.panelLeft = Math.max(24, this.firstColumnX - PANEL_MARGIN);
 		this.panelRight = Math.min(this.width - 24, this.firstColumnX + totalColumnsWidth + PANEL_MARGIN);
 
-		int contentHeight = Math.max(DEFAULT_ROWS_PER_COLUMN, this.rowsPerColumn) * ROW_SPACING;
+		int contentHeight = Math.max(5, this.rowsPerColumn) * ROW_SPACING;
 		int idealBaseY = (this.height - contentHeight) / 2;
-		int minBaseY = MIN_TOP_MARGIN;
-		int maxBaseY = Math.max(minBaseY, this.height - CONTENT_BOTTOM_PADDING - contentHeight - 24);
+		int minBaseY = 72;
+		int maxBaseY = Math.max(minBaseY, this.height - 96 - contentHeight - 24);
 		this.baseY = Math.min(Math.max(idealBaseY, minBaseY), maxBaseY);
-		this.panelTop = Math.max(24, this.baseY - CONTENT_TOP_PADDING);
-		this.panelBottom = Math.min(this.height - 24, this.baseY + contentHeight + CONTENT_BOTTOM_PADDING);
+		this.panelTop = Math.max(24, this.baseY - 48);
+		this.panelBottom = Math.min(this.height - 24, this.baseY + contentHeight + 96);
 
-		HotbarPriorityConfig config = holder.getConfig();
+		PriorityConfig config = holder.getConfig();
 
 		for (int slot = 0; slot < SLOT_COUNT; slot++) {
 			int column = slot / this.rowsPerColumn;
@@ -113,12 +107,12 @@ public class HotbarPriorityConfigScreen extends Screen {
 			}
 			int row = slot % this.rowsPerColumn;
 
-			int columnX = this.firstColumnX + column * (this.columnContentWidth + COLUMN_GAP);
+			int columnX = this.firstColumnX + column * (this.columnContentWidth + 28);
 			int labelX = columnX;
-			int fieldX = labelX + this.labelColumnWidth + LABEL_FIELD_GAP;
+			int fieldX = labelX + this.labelColumnWidth + 6;
 			int y = this.baseY + row * ROW_SPACING;
 			int labelY = y + (FIELD_HEIGHT - this.font.lineHeight) / 2;
-			int resetX = fieldX + FIELD_WIDTH + FIELD_BUTTON_GAP;
+			int resetX = fieldX + FIELD_WIDTH + 6;
 
 			Component label = labels.get(slot);
 			EditBox field = new EditBox(this.font, fieldX, y, FIELD_WIDTH, FIELD_HEIGHT, Component.empty());
@@ -129,12 +123,12 @@ public class HotbarPriorityConfigScreen extends Screen {
 				}
 				updateState();
 			});
-			field.setValue(String.valueOf(config.getSlotPriority(slot)));
+			field.setValue(String.valueOf(this.pendingValues != null ? this.pendingValues[slot] : config.getSlotPriority(slot)));
 
 			final EditBox finalField = field;
 			final int finalSlot = slot;
 			Button resetButton = Button.builder(Component.literal("Reset"), b -> resetSlotToDefault(finalField, finalSlot))
-				.bounds(resetX, y, RESET_BUTTON_WIDTH, RESET_BUTTON_HEIGHT)
+				.bounds(resetX, y, 42, 20)
 				.build();
 
 			SlotField entry = new SlotField(slot, label, field, labelX, labelY, resetButton);
@@ -142,10 +136,39 @@ public class HotbarPriorityConfigScreen extends Screen {
 			this.addRenderableWidget(field);
 			this.addRenderableWidget(resetButton);
 		}
+		this.pendingValues = null;
+
+		this.addRenderableWidget(Button.builder(Component.literal("Profiles..."), b -> openProfiles())
+			.bounds(centerX - 50, this.panelBottom - 28, 100, 20)
+			.build());
 
 		this.saveButton = null;
 
 		updateState();
+	}
+
+	void loadValues(int[] values) {
+		this.pendingValues = values.clone();
+	}
+
+	int[] currentValues() {
+		if (validateInput().isPresent()) {
+			return null;
+		}
+		int[] values = new int[SLOT_COUNT];
+		for (SlotField slotField : this.slotFields) {
+			values[slotField.slotIndex] = Integer.parseInt(slotField.field.getValue());
+		}
+		return values;
+	}
+
+	private void openProfiles() {
+		// init() wipes the fields otherwise
+		int[] current = currentValues();
+		if (current != null) {
+			this.pendingValues = current;
+		}
+		Minecraft.getInstance().gui.setScreen(new ProfilesScreen(this, current));
 	}
 
 	private void save() {
@@ -156,18 +179,18 @@ public class HotbarPriorityConfigScreen extends Screen {
 			return;
 		}
 
-		HotbarPriorityConfig config = holder.getConfig();
+		PriorityConfig config = holder.getConfig();
 		for (SlotField slotField : this.slotFields) {
 			int value = Integer.parseInt(slotField.field.getValue());
 			config.setSlotPriority(slotField.slotIndex, value);
 		}
 
 		commitConfig(config);
-		Minecraft.getInstance().setScreen(null);
+		Minecraft.getInstance().gui.setScreen(null);
 	}
 
 	private void cancel() {
-		Minecraft.getInstance().setScreen(this.parent);
+		Minecraft.getInstance().gui.setScreen(this.parent);
 	}
 
 	private void updateState() {
@@ -201,7 +224,7 @@ public class HotbarPriorityConfigScreen extends Screen {
 		return Optional.empty();
 	}
 
-	private boolean commitConfig(HotbarPriorityConfig config) {
+	private boolean commitConfig(PriorityConfig config) {
 		try {
 			config.ensureValid();
 			holder.save();
@@ -213,7 +236,7 @@ public class HotbarPriorityConfigScreen extends Screen {
 	}
 
 	private void resetSlotToDefault(EditBox field, int slotIndex) {
-		field.setValue(String.valueOf(HotbarPriorityConfig.getDefaultPriority(slotIndex)));
+		field.setValue(String.valueOf(PriorityConfig.getDefaultPriority(slotIndex)));
 		updateState();
 	}
 
@@ -221,7 +244,7 @@ public class HotbarPriorityConfigScreen extends Screen {
 	public void onClose() {
 		Optional<Component> validationError = validateInput();
 		if (validationError.isEmpty()) {
-			HotbarPriorityConfig config = holder.getConfig();
+			PriorityConfig config = holder.getConfig();
 			for (SlotField slotField : this.slotFields) {
 				int value = Integer.parseInt(slotField.field.getValue());
 				config.setSlotPriority(slotField.slotIndex, value);
@@ -234,14 +257,13 @@ public class HotbarPriorityConfigScreen extends Screen {
 			updateState();
 			return;
 		}
-		Minecraft.getInstance().setScreen(this.parent);
+		Minecraft.getInstance().gui.setScreen(this.parent);
 	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(guiGraphics, mouseX, mouseY, delta);
 
-		// Draw title using 26.1 text rendering
 		guiGraphics.text(
 			this.font,
 			this.title.getVisualOrderText(),
@@ -250,8 +272,7 @@ public class HotbarPriorityConfigScreen extends Screen {
 			0xFFFFFFFF,
 			true
 		);
-		
-		// Draw instructions using 26.1 text rendering
+
 		MutableComponent instructions = Component.literal("Enter unique values 1-9 to set hotbar priority order.").withStyle(ChatFormatting.GRAY);
 		guiGraphics.text(
 			this.font,
@@ -262,7 +283,6 @@ public class HotbarPriorityConfigScreen extends Screen {
 			true
 		);
 
-		// Draw slot labels using 26.1 text rendering
 		for (SlotField slotField : this.slotFields) {
 			guiGraphics.text(
 				this.font,
@@ -274,7 +294,6 @@ public class HotbarPriorityConfigScreen extends Screen {
 			);
 		}
 
-		// Draw error text if present using 26.1 text rendering
 		if (this.errorText != null) {
 			guiGraphics.text(
 				this.font,
@@ -289,13 +308,9 @@ public class HotbarPriorityConfigScreen extends Screen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
-		// Background gradient
 		guiGraphics.fillGradient(0, 0, this.width, this.height, 0xC0101010, 0xE0101010);
-		
-		// Panel background
 		guiGraphics.fill(panelLeft, panelTop, panelRight, panelBottom, 0xCC101018);
-		
-		// Panel borders
+
 		guiGraphics.fill(panelLeft, panelTop, panelRight, panelTop + 2, 0xFF5C5CFF);
 		guiGraphics.fill(panelLeft, panelBottom - 2, panelRight, panelBottom, 0xFF5C5CFF);
 	}
@@ -315,6 +330,14 @@ public class HotbarPriorityConfigScreen extends Screen {
 			this.labelX = labelX;
 			this.labelY = labelY;
 			this.resetButton = resetButton;
+		}
+	}
+
+	@Environment(EnvType.CLIENT)
+	public static class ModMenuIntegration implements ModMenuApi {
+		@Override
+		public ConfigScreenFactory<?> getModConfigScreenFactory() {
+			return ConfigScreen::new;
 		}
 	}
 }

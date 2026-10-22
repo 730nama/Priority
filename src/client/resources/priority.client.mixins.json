@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "com.example.mixin.client",
+	"package": "aman037.priority.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"MinecraftClientMixin"
+		"ClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
